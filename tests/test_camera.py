@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from camera import Camera
+from core.camera import Camera
 
 class TestCamera:
     @pytest.fixture

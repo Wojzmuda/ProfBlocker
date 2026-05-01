@@ -46,6 +46,7 @@ class DataBaseManager():
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("DELETE FROM users where name = ?", (name,))
             conn.commit()
+            
 
 if __name__=="__main__":
     manager = DataBaseManager()

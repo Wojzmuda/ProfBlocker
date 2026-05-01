@@ -19,8 +19,8 @@ class Camera:
             raise RuntimeError("Camera is already being used")
         
         
-        self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 1280)
+        self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
 
         success = False
         for _ in range(5):

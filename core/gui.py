@@ -21,6 +21,8 @@ class GUI(customtkinter.CTk):
         self._config_panel.grid(row=0, column=1, sticky="nswe", padx=(0,10), pady=10)
 
     def custom_destroy(self):
+        if self._camera_view_panel._camera:
+            self._camera_view_panel._camera.release()
         self.destroy()
 
 

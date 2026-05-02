@@ -14,10 +14,12 @@ class GUI(customtkinter.CTk):
         self.grid_columnconfigure(1, weight=0)
         self.grid_rowconfigure(0, weight=1)
 
-        self._camera_view_panel = CameraViewPanel(master=self)
+        self._facerecognizer = FaceRecognizer()
+
+        self._camera_view_panel = CameraViewPanel(master=self, facerecognizer= self._facerecognizer)
         self._camera_view_panel.grid(row=0, column=0, sticky="nswe", padx=10, pady=10)
         actions = ["Action 1", "Action 2", "Action 3"]
-        self._config_panel = ConfigPanel(master=self, values=actions)
+        self._config_panel = ConfigPanel(master=self, values=actions, facerecognizer=self._facerecognizer)
         self._config_panel.grid(row=0, column=1, sticky="nswe", padx=(0,10), pady=10)
 
     def custom_destroy(self):
@@ -27,10 +29,11 @@ class GUI(customtkinter.CTk):
 
 
 class ConfigPanel(customtkinter.CTkFrame):
-    def __init__(self, master,values):
+    def __init__(self, master,values, facerecognizer):
         super().__init__(master)
         self.checkboxes=[]
         self.values=values
+        self._facerecognizer = facerecognizer
         self._label = customtkinter.CTkLabel(self, text="Settings",font=("Arial", 16, "bold") )
         self._label.pack(pady=20, padx=20)
 
@@ -75,9 +78,10 @@ class ConfigPanel(customtkinter.CTkFrame):
 
     
 
-class CameraViewPanel(customtkinter.CTkFrame):
 
-    def __init__(self, master):
+    
+class CameraViewPanel(customtkinter.CTkFrame):
+    def __init__(self, master, facerecognizer):
         super().__init__(master)
 
         self.grid_propagate(False)
@@ -93,7 +97,7 @@ class CameraViewPanel(customtkinter.CTkFrame):
         self.bind("<Configure>", self.on_resize)
         self._camera = Camera(0)
         self._camera.setup()
-        self._facerecognizer = FaceRecognizer()
+        self._facerecognizer = facerecognizer
 
         self.frame_counter = 0
         self.process_every_n_frames = 3

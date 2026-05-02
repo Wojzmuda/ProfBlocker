@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 
 class FaceRecognizer:
-    def __init__(self, tolerance=0.5):
+    def __init__(self, tolerance=0.6):
         self._databasemanager = DataBaseManager()
         all_data = self._databasemanager.load_all_users()
         if all_data:

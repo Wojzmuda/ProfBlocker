@@ -4,6 +4,7 @@ from camera import Camera
 from facerecognizer import FaceRecognizer
 import cv2
 from PIL import Image, ImageTk
+import tkinter.messagebox as messagebox
 class GUI(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -15,11 +16,11 @@ class GUI(customtkinter.CTk):
         self.grid_rowconfigure(0, weight=1)
 
         self._facerecognizer = FaceRecognizer()
-
-        self._camera_view_panel = CameraViewPanel(master=self, facerecognizer= self._facerecognizer)
+        self._camera = Camera(0)
+        self._camera_view_panel = CameraViewPanel(master=self, facerecognizer= self._facerecognizer, camera=self._camera)
         self._camera_view_panel.grid(row=0, column=0, sticky="nswe", padx=10, pady=10)
         actions = ["Action 1", "Action 2", "Action 3"]
-        self._config_panel = ConfigPanel(master=self, values=actions, facerecognizer=self._facerecognizer)
+        self._config_panel = ConfigPanel(master=self, values=actions, facerecognizer=self._facerecognizer, camera = self._camera)
         self._config_panel.grid(row=0, column=1, sticky="nswe", padx=(0,10), pady=10)
 
     def custom_destroy(self):
@@ -29,11 +30,12 @@ class GUI(customtkinter.CTk):
 
 
 class ConfigPanel(customtkinter.CTkFrame):
-    def __init__(self, master,values, facerecognizer):
+    def __init__(self, master,values, facerecognizer, camera):
         super().__init__(master)
         self.checkboxes=[]
         self.values=values
         self._facerecognizer = facerecognizer
+        self._camera = camera
         self._label = customtkinter.CTkLabel(self, text="Settings",font=("Arial", 16, "bold") )
         self._label.pack(pady=20, padx=20)
 
@@ -43,7 +45,7 @@ class ConfigPanel(customtkinter.CTkFrame):
         self._add_user_entry = customtkinter.CTkEntry(self.add_user_frame, placeholder_text="Unique user name")
         self._add_user_entry.pack(pady=5, padx=10, fill="x")
 
-        self._add_users_button = customtkinter.CTkButton(self.add_user_frame, text="Add User", fg_color="#2FA572", hover_color="#106A43")
+        self._add_users_button = customtkinter.CTkButton(self.add_user_frame, text="Add User", fg_color="#2FA572", hover_color="#106A43", command=self.add_user)
         self._add_users_button.pack(pady=5, padx=10, fill="x")
 
         self._manage_users_button = customtkinter.CTkButton(self, text="Manage users")
@@ -76,12 +78,60 @@ class ConfigPanel(customtkinter.CTkFrame):
                 checked_checkboxes.append(checkbox.cget("text"))
         return checked_checkboxes
 
+    def add_user(self):
+        entry = self._add_user_entry.get().strip()
+        if  entry == "":
+            self.add_user_show_message("empty_name")
+            return
+        frame = self._camera.get_frame()
+        if frame is None:
+            self.add_user_show_message("camera_error")
+            return
+        outcome, result = self._facerecognizer.is_there_a_single_face(frame)
+        if outcome is False:
+            self.add_user_show_message(result)
+            return
+        
+        cropped_face = self._facerecognizer.crop_face(frame, result)
+
+        success, path = self._camera.take_picture(cropped_face, f"{entry}.jpg")
+        if success:
+            outcome, message = self._facerecognizer.add_recognized_person(entry, frame, path)
+            if outcome is True:
+                self.add_user_show_message("success")
+                self._add_user_entry.delete(0, 'end') 
+            else:
+                self.add_user_show_message(message)
+        else:
+            self.add_user_show_message("picture_error")
+
+    def add_user_show_message(self, message):
+        messages = {
+            "empty_name": ("Warning", "You need to input user's name!"),
+            "no_face": ("Warning", "No face was detected in front of the camera"),
+            "multiple_faces": ("Warning", "There is more than one face in the frame"),
+            "name_occupied": ("Error", "That name is already taken, pick a different name"),
+            "empty_frame": ("Error", "Frame is empty"),
+            "camera_error": ("Error", "Error connecting with the camera"),
+            "picture_error": ("Error", "Unable to save the picture"),
+            "success": ("Info", "User has ben succesfully added to the base")
+        }
+        msg_type, text = messages.get(message, ("Error", f"An unexpected error occured: {message}"))
+
+
+        if msg_type == "Warning":
+            messagebox.showwarning("Warning", text)
+        elif msg_type == "Error":
+            messagebox.showerror("Error", text)
+        elif msg_type == "Info":
+            messagebox.showinfo("Info", text)
+
     
 
 
     
 class CameraViewPanel(customtkinter.CTkFrame):
-    def __init__(self, master, facerecognizer):
+    def __init__(self, master, facerecognizer, camera):
         super().__init__(master)
 
         self.grid_propagate(False)
@@ -95,7 +145,7 @@ class CameraViewPanel(customtkinter.CTkFrame):
         self._monitor = tkinter.Label(self, bg="black")
         self._monitor.pack(fill="both", expand=True)
         self.bind("<Configure>", self.on_resize)
-        self._camera = Camera(0)
+        self._camera = camera
         self._camera.setup()
         self._facerecognizer = facerecognizer
 

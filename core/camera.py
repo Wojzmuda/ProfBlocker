@@ -19,8 +19,8 @@ class Camera:
             raise RuntimeError("Camera is already being used")
         
         
-        self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 1280)
-        self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
+        self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 
         success = False
         for _ in range(5):
@@ -53,12 +53,11 @@ class Camera:
         self._is_camera_down()
         return None
     
-    def take_picture(self, filename = "user.jpg") -> bool:
-        frame = self.get_frame()
+    def take_picture(self, frame,  filename = "user.jpg") -> bool:
         if frame is not None:
             full_path = self.faces_dir / filename
-            return cv2.imwrite(str(full_path), frame)
-        return False
+            return cv2.imwrite(str(full_path), frame), str(full_path)
+        return False, None
 
     
     def release(self):

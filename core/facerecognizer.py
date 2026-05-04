@@ -47,7 +47,27 @@ class FaceRecognizer:
             self.picture_paths.append(picture_path)
         return True, "success"
 
+    def is_there_a_single_face(self, frame):
+        if frame is None:
+            return False,"empty_frame"
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
+        face_locations = face_recognition.face_locations(rgb_frame)
+        if len(face_locations) == 0:
+            return False, "no_face"
+        if len(face_locations) > 1:
+            return False, "multiple_faces"
+        return True, face_locations[0]
+    
+    def crop_face(self, frame, face_location, padding=50):
+        top, right, bottom, left = face_location
+        h, w, _ = frame.shape
+        new_top = max(0, top-padding)
+        new_bottom = min(h, bottom + padding)
+        new_left = max(0, left-padding)
+        new_right = min(w, right+padding)
+        return frame[new_top:new_bottom, new_left:new_right]
+    
     def is_known_face(self, frame):
         if frame is None:
             return False, [], "empty_frame"
